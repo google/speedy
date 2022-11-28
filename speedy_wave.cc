@@ -23,9 +23,9 @@
 #include <vector>
 
 extern "C" {
-#include "third_party/sonic/wave.h"
-#include "third_party/speedy/sonic.h"
-#include "third_party/speedy/speedy/speedy.h"
+#include "../sonic/wave.h"
+#include "sonic.h"
+#include "speedy.h"
 }
 
 double speed = 3.0;
@@ -167,6 +167,7 @@ double compress_sound(const std::string& input_file_name, double speed,
 
   sonicStream mySonicStream = sonicCreateStream(sampleRate, numChannels);
   sonicSetSpeed(mySonicStream, speed);
+  sonicSetQuality(mySonicStream, 100);   /* TESTING *(/
   /* TODO(malcolmslaney) - Hook up argument for tension normalization */
   sonicEnableNonlinearSpeedup(mySonicStream, nonlinear > 0.0,
                               normalization_time);

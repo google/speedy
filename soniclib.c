@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "sonic.h"
-#include "speedy/speedy.h"
+#include "speedy.h"
 
 /*
  * Replace original libSonic with this shim to allow non-linear speedups of
