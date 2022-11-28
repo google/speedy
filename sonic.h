@@ -32,40 +32,19 @@ extern "C" {
  * can define the original function names (which are what users are calling).
  */
 #define  SONIC_INTERNAL 1
-#include "third_party/sonic/sonic.h"
+#include "../sonic/sonic.h"
+
+/* Note we are undef'ing only the following sumbols because we redefine them
+ * in this file. */
 #undef sonicCreateStream
 #undef sonicDestroyStream
 #undef sonicWriteFloatToStream
 #undef sonicWriteShortToStream
-#undef sonicWriteUnsignedCharToStream
 #undef sonicReadFloatFromStream
 #undef sonicReadShortFromStream
-#undef sonicReadUnsignedCharFromStream
 #undef sonicFlushStream
-#undef sonicSamplesAvailable
-#undef sonicGetSpeed
 #undef sonicSetSpeed
-#undef sonicGetPitch
-#undef sonicSetPitch
-#undef sonicGetRate
 #undef sonicSetRate
-#undef sonicGetVolume
-#undef sonicSetVolume
-#undef sonicGetChordPitch
-#undef sonicSetChordPitch
-#undef sonicGetQuality
-#undef sonicSetQuality
-#undef sonicGetSampleRate
-#undef sonicSetSampleRate
-#undef sonicGetNumChannels
-#undef sonicGetUserData
-#undef sonicSetUserData
-#undef sonicSetNumChannels
-#undef sonicChangeFloatSpeed
-#undef sonicChangeShortSpeed
-#undef sonicEnableNonlinearSpeedup
-#undef sonicComputeSpectrogram
-#undef sonicGetSpectrogram
 
 
 #undef   SONIC_UPGRADE
