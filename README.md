@@ -1,4 +1,4 @@
-# Speedy - Non-Linear Speech Speedup
+# Speedy - Nonlinear Speech Speedup
 
 This is not an officially supported Google product.
 

@@ -79,8 +79,15 @@ int sonicFlushStream(sonicStream mySonicStream);
  * (in seconds) and the average speed is driven to the requested.
  */
 void sonicEnableNonlinearSpeedup(sonicStream mySonicStream,
-                                 float nonlinearFactor,
-                                 float normalizationTime);
+                                 float nonlinearFactor);
+
+/* Set the feedback strength to use when connecting the excess duration
+ * (current minus desired duration, given the global speed request) and the
+ * amount to goose the requested (to sonic) speedup.
+ * Use 0.0 to get the original behavior (no feedback. The value of 0.1 seems to
+ * be a good compromise, providing a .1 speedup for every 1s of excess duration.
+ */
+void sonicSetDurationFeedbackStrength(sonicStream mySonicStream, float factor);
 
 /* Return the size of the internal buffers.  This is needed for the callback
  * functions, which return time in buffer counts.

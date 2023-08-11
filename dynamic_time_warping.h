@@ -20,7 +20,7 @@
 #include <functional>
 #include <vector>
 
-#include "third_party/absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"
 
 // A class that implements dynamic time warping for n-dimensional time series
 // comparison.

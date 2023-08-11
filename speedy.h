@@ -81,10 +81,10 @@ void speedyAddDataShort(speedyStream stream, const int16_t input[],
  * provided to speedyAddData is frame time 0, then the next is 1.
  */
 int speedyComputeTension(speedyStream stream, int64_t at_time, float* tension);
-float speedyComputeSpeedFromTension(float tension, float R_g);
+float speedyComputeSpeedFromTension(float tension, float R_g,
+                                    float duration_feedback_strength,
+                                    speedyStream stream);
 int64_t speedyGetCurrentTime(speedyStream stream);
-void speedyUpdateTensionNormalization(speedyStream stream,
-                                      float normalizationTime);
 
 /* The following functions are NOT designed to be user callable.  They are
  * defined here to make the internals of this function available for testing.

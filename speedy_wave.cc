@@ -21,14 +21,16 @@
 #include <utility>
 #include <iostream>
 #include <vector>
+#include "../sonic/sonic.h"
 
 extern "C" {
 #include "../sonic/wave.h"
-#include "sonic.h"
-#include "speedy.h"
+#include "../speedy/sonic.h"
+#include "../speedy/speedy.h"
 }
 
 double speed = 3.0;
+double duration_feedback_strength = 0.0;
 double nonlinear = 1.0;
 double normalization_time = 0.0;   /* Seconds, 0 turns it off. */
 double desired_length = 0.0;
@@ -37,30 +39,6 @@ int match_nonlinear = false;
 /*
  * A simple application that time-compresses one speech file.
  */
-
-/* To test, try these commands from a CITC client.
-   cd third_party/speedy
-   # Linear speedup by 3x
-   ../../blaze-bin/third_party/speedy/speedy_wave  \
-     --input test_data/tapestry.wav \
-     --nonlinear 0.0 --speed 3 --output /tmp/tap_linear.wav
-   # Non-linear speedup (speedy) by a nominal 3x.
-   ../../blaze-bin/third_party/speedy/speedy_wave \
-     --input test_data/tapestry.wav \
-     --tension_file /tmp/nl_tension.txt --speed_file /tmp/nl_speed.txt \
-     --speed 3 --output /tmp/tap_nonlinear.wav
-   # Non-linear speedup (speedy) by a normalized 3x.
-   ../../blaze-bin/third_party/speedy/speedy_wave \
-     --input test_data/tapestry.wav --normalization_time 0.01 \
-     --tension_file /tmp/nln_tension.txt --speed_file /tmp/nln_speed.txt \
-     --speed 3 --output /tmp/tap_nonlinear_normed.wav
-   # Linear speedup matched to a 3x non-linear total time
-   ../../blaze-bin/third_party/speedy/speedy_wave \
-     --input test_data/tapestry.wav \
-     --nonlinear 0.0 --speed 3 --match_nonlinear --output /tmp/tap_matched.wav
-   # To see the computed tension and the resulting speedup, add these arguments
-     --tension_file /tmp/tension.txt --speed_file /tmp/speed.txt
-*/
 
 
 /* Save the tension calculated by the libsonic2 (speedy) calculation.
@@ -138,6 +116,10 @@ void normalizedSpectrogramSaver(sonicStream myStream, int time,
  *     speedup be equal to the specified time argument.  Zero means no
  *     averaging.  Otherwise, the proferred speed after running the non-linear
  *     speedup algorithm is modified to keep the average as specified.
+ *   duration_feedback_strength: How fast to close the duration loop.  Zero
+ *     means run open loop, as was the original default.  Vaues > 0 indicate how
+ *     much of the excess duration to use to increase the overall speed. About
+ *     0.1 converges after a few seconds.
  *   output_file: wave file to store the output waveform.  Don't store if the
  *     output_file string is empty.
  *
@@ -146,7 +128,7 @@ void normalizedSpectrogramSaver(sonicStream myStream, int time,
  *   the actual non-linear speedup when compressing with linear speedup.)
  */
 double compress_sound(const std::string& input_file_name, double speed,
-                      double nonlinear, double normalization_time,
+                      double nonlinear, double duration_feedback_strength,
                       const std::string &output_file_name) {
   int sampleRate, numChannels, totalFramesReadFromWave = 0;
   int totalFramesProducedBySpeedy = 0;
@@ -167,10 +149,9 @@ double compress_sound(const std::string& input_file_name, double speed,
 
   sonicStream mySonicStream = sonicCreateStream(sampleRate, numChannels);
   sonicSetSpeed(mySonicStream, speed);
-  sonicSetQuality(mySonicStream, 100);   /* TESTING *(/
-  /* TODO(malcolmslaney) - Hook up argument for tension normalization */
-  sonicEnableNonlinearSpeedup(mySonicStream, nonlinear > 0.0,
-                              normalization_time);
+
+  sonicEnableNonlinearSpeedup(mySonicStream, nonlinear > 0.0);
+  sonicSetDurationFeedbackStrength(mySonicStream, duration_feedback_strength);
   if (nonlinear > 0.0 && !output_file_name.empty()) {
     // If we are generating non-linear output, output the debug data if wanted.
     sonicTensionCallback(mySonicStream, tensionSaver);
@@ -241,7 +222,6 @@ int main(int argc, char** argv) {
   std::string output_file_name;
   static const char* usage = "Usage: %s [--speed 3.0]\n"
                 "\t[--nonlinear 1.0] [--match_nonlinear]\n"
-                "\t[--normalization_time 0.0]\n"
                 "\t[--tension_file filename] [--speed_file filename]\n"
                 "\t--input sound.wav --output fastsound.wav\n"
                 "\t [set nonlinear to 0.0 to get a linear speedup.]\n";
@@ -262,12 +242,12 @@ int main(int argc, char** argv) {
         {"output",        required_argument, NULL, 'o'},
         {"speed",         optional_argument, NULL, 's'},
         {"nonlinear",     optional_argument, NULL, 'n'},    /* How nonlinear? */
-        {"normalization_time", optional_argument, NULL, 'T'},  /* seconds */
         {"length",        required_argument, NULL, 'e'},    /* total seconds */
         {"tension_file",  optional_argument, NULL, 't'},
         {"speed_file",    optional_argument, NULL, 'p'},
         {"features_file", optional_argument, NULL, 'f'},
         {"spectrogram_file", optional_argument, NULL, 'S'},
+        {"duration_feedback_strength", optional_argument, NULL, 'd'},
         {"normalized_spectrogram_file", optional_argument, NULL, 'N'},
         {0, 0, 0, 0}
       };
@@ -284,7 +264,7 @@ int main(int argc, char** argv) {
     case 0:
         break;        /* Handled as a flag, nothing to do here. */
 
-    case 'i':
+    case 'i':         /* Input file name */
         if (optarg) {
           input_file_name = optarg;
         } else {
@@ -292,7 +272,7 @@ int main(int argc, char** argv) {
         }
         break;
 
-    case 'o':
+    case 'o':         /* Output file name */
         if (optarg) {
           output_file_name = optarg;
         } else {
@@ -300,7 +280,7 @@ int main(int argc, char** argv) {
         }
         break;
 
-    case 's':
+    case 's':         /* Desired speedup ratio */
         assert(optarg || argv[optind]);
         if (optarg) {
           speed = strtod(optarg, NULL);
@@ -310,7 +290,17 @@ int main(int argc, char** argv) {
         assert(speed > 0.0);
         break;
 
-    case 'e':
+    case 'd':         /* Duratiom feedback strength */
+        assert(optarg || argv[optind]);
+        if (optarg) {
+          duration_feedback_strength = strtod(optarg, NULL);
+        } else {
+          duration_feedback_strength = strtod(argv[optind], NULL);
+        }
+        assert(duration_feedback_strength >= 0.0);
+        break;
+
+    case 'e':         /* Desired length of output */
         assert(optarg || argv[optind]);
         if (optarg) {
           desired_length = strtod(optarg, NULL);
@@ -320,11 +310,11 @@ int main(int argc, char** argv) {
         assert(desired_length > 0.0);
         break;
 
-    case 'l':
+    case 'l':         /* Flag turning on linear speedup */
         nonlinear = 0.0;
         break;
 
-    case 'n':
+    case 'n':         /* Turn on non-linear speedup by this factor. */
         assert(optarg || argv[optind]);
         if (optarg) {
           nonlinear = strtod(optarg, NULL);
@@ -335,17 +325,7 @@ int main(int argc, char** argv) {
         assert(nonlinear >= 0.0 && nonlinear <= 2.0);
         break;
 
-    case 'T':
-        assert(optarg || argv[optind]);
-        if (optarg) {
-          normalization_time = strtod(optarg, NULL);
-        } else {
-          normalization_time = strtod(argv[optind], NULL);
-        }
-        assert(normalization_time >= 0.0);
-        break;
-
-    case 't':
+    case 't':         /* Tension debug file name */
         assert(optarg || argv[optind]);
         if (optarg) {
           tension_fp = fopen(optarg, "w");
@@ -355,7 +335,7 @@ int main(int argc, char** argv) {
         assert(tension_fp);
         break;
 
-    case 'p':
+    case 'p':         /* Speed debug file name */
         assert(optarg || argv[optind]);
         if (optarg) {
           speed_fp = fopen(optarg, "w");
@@ -365,7 +345,7 @@ int main(int argc, char** argv) {
         assert(speed_fp);
         break;
 
-    case 'f':
+    case 'f':         /* Features debug file name */
         assert(optarg || argv[optind]);
         if (optarg) {
           features_fp = fopen(optarg, "w");
@@ -375,7 +355,7 @@ int main(int argc, char** argv) {
         assert(features_fp);
         break;
 
-    case 'S':
+    case 'S':          /* Spectrogram debug file name */
         assert(optarg || argv[optind]);
         if (optarg) {
           spectrogram_fp = fopen(optarg, "w");
@@ -385,7 +365,14 @@ int main(int argc, char** argv) {
         assert(spectrogram_fp);
         break;
 
-    case 'N':
+    case 'N':           /* Normalized spectrogram debug file name */
+        assert(optarg || argv[optind]);
+        if (optarg) {
+          normalized_spectrogram_fp = fopen(optarg, "w");
+        } else {
+          normalized_spectrogram_fp = fopen(argv[optind], "w");
+        }
+        assert(normalized_spectrogram_fp);
         assert(optarg || argv[optind]);
         if (optarg) {
           normalized_spectrogram_fp = fopen(optarg, "w");
@@ -411,8 +398,12 @@ int main(int argc, char** argv) {
   }
 
   if (match_nonlinear) {
-    speed = compress_sound(input_file_name, speed, 1.0, normalization_time, "");
+    // Figure out what speed we get with non-linear speedup.
+    speed = compress_sound(input_file_name, speed, 1.0,
+                           duration_feedback_strength, "");
   } else if (desired_length > 0) {
+    // Try to hit a desired length.  First compress it normally, and then
+    // adjust the desired speed by scaling to get what we want.
     int sampleRate, numChannels;
     waveFile waveInputFp = openInputWaveFile(input_file_name.c_str(),
                                              &sampleRate, &numChannels);
@@ -438,7 +429,7 @@ int main(int argc, char** argv) {
     printf("Read %d frames, and trying to speed up with a factor of %g.\n",
            totalFramesReadFromWave, desired_speed);
     auto new_speed = compress_sound(input_file_name, desired_speed, 1.0,
-                                    normalization_time, "");
+                                    duration_feedback_strength, "");
     speed = desired_speed * (desired_speed / new_speed);
     printf("First scaling by %g gave a speed of %g.\n", desired_speed,
            new_speed);
@@ -451,6 +442,6 @@ int main(int argc, char** argv) {
       (nonlinear > 0.0 ? "non-linearly" : "linearly") << " by " <<
       speed << "X into " << output_file_name << "." << std::endl;
 
-  compress_sound(input_file_name, speed, nonlinear, normalization_time,
-                 output_file_name);
+  compress_sound(input_file_name, speed, nonlinear,
+                 duration_feedback_strength, output_file_name);
 }

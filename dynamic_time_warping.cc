@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "third_party/speedy/dynamic_time_warping.h"
+#include "../speedy/dynamic_time_warping.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -20,7 +20,7 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "third_party/absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"
 
 DynamicTimeWarping::DynamicTimeWarping(
     std::size_t dimension,

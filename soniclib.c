@@ -62,15 +62,14 @@ struct speedyConnectionStruct {
   speedyStream mySpeedyStream;
   float globalSpeed;            /* Set by user request */
   float speedyNonlinearFactor;  /* Set by user, usually 0 or 1 (off or on) */
-  float speedyNormalizationTime;  /* In seconds to keep speed at desired rate */
-                                  /* 0 turns off the speed normalization. */
+  float speedyDurationFeedbackStrength; /* How quick to feedback excess duration */
   float sampleRate;
   int channelCount;             /* Number of channels >= 1 */
   int bufferCount;
   int bufferSize;               /* Number of multi-channel samples per buffer */
   short** bufferList;
   float* tensionList;
-  short* speedyInputBuffer;     /* To accumuate buffers to send to Speedy */
+  short* speedyInputBuffer;     /* To accumulate buffers to send to Speedy */
   int readBufferFrameIndex;     /* Frame time, always increasing. */
   int speedyBufferFrameIndex;   /* Frame time, always increasing. */
   int writeBufferFrameIndex;    /* Frame time, always increasing. */
@@ -117,9 +116,10 @@ sonicStream sonicCreateStream(int sampleRate, int numChannels){
   mySpeedyConnector->channelCount = numChannels;
   mySpeedyConnector->speedyNonlinearFactor = 0.0;    /* Off by default */
   /* How fast to normalize the speed (after non-linear speedup) to keep the
-   * average speed at the desired.  2 or 3 seconds is probably a good number.
+   * average speed at the desired.  The default 0.1 means the speed is upped
+   * by 0.1 times the excess duration in seconds.
    */
-  mySpeedyConnector->speedyNormalizationTime = 0.0;  /* Off by default */
+  mySpeedyConnector->speedyDurationFeedbackStrength = 0.1;
   mySpeedyConnector->returnTension = 0;
   mySpeedyConnector->returnSpeed = 0;
   mySpeedyConnector->returnFeatures = 0;
@@ -337,7 +337,8 @@ void sonicSendDataToSpeedy(sonicStream mySonicStream) {
 #endif
 
     float newRate = speedyComputeSpeedFromTension(
-        newTension, mySpeedyConnector->globalSpeed);
+        newTension, mySpeedyConnector->globalSpeed,
+        mySpeedyConnector->speedyDurationFeedbackStrength, mySpeedyStream);
     // Interpolate between speedy-derived speed, and the global/linear request.
     float globalSpeed = mySpeedyConnector->globalSpeed;
     newRate = newRate    *   mySpeedyConnector->speedyNonlinearFactor +
@@ -508,6 +509,9 @@ int sonicWriteFloatToStream(sonicStream mySonicStream, float* inBuffer,
       mySpeedyConnector->writeBufferFrameLocation = 0;
       mySpeedyConnector->writeBufferFrameIndex++;
     }
+#ifdef DEBUG
+    printf("Finished %d samples\n", sampleCount);
+#endif
   }
   return 1;
 }
@@ -548,19 +552,22 @@ int sonicFlushStream(sonicStream mySonicStream){
 }
 
 /* Enable non-linear speedup. */
-void sonicEnableNonlinearSpeedup(sonicStream mySonicStream, float factor,
-                                 float normalizationTime) {
+void sonicEnableNonlinearSpeedup(sonicStream mySonicStream, float factor) {
   assert(mySonicStream);
   speedyConnection mySpeedyConnector =
       (speedyConnection)sonicIntGetUserData(mySonicStream);
-  speedyStream mySpeedyStream = (speedyStream)mySpeedyConnector->mySpeedyStream;
 
   /* TODO(malcolmslaney): Perhaps flush buffers if turning off speedy? */
   mySpeedyConnector->speedyNonlinearFactor = factor;
-  mySpeedyConnector->speedyNormalizationTime = normalizationTime;
-  if (normalizationTime > 0.0){
-    speedyUpdateTensionNormalization(mySpeedyStream, normalizationTime);
-  }
+}
+
+/* Set the strength of the feedback term connecting excess duration to speed. */
+void sonicSetDurationFeedbackStrength(sonicStream mySonicStream, float factor) {
+  assert(mySonicStream);
+  speedyConnection mySpeedyConnector =
+      (speedyConnection)sonicIntGetUserData(mySonicStream);
+
+  mySpeedyConnector->speedyDurationFeedbackStrength = factor;
 }
 
 void sonicTensionCallback(sonicStream mySonicStream,
