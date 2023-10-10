@@ -30,7 +30,7 @@ The basic functionality is shown below.
 
 ```c
 extern "C" {
-include "sonic.h"    /* From Speedy */
+include "sonic2.h"    /* From Speedy */
 #include "speedy.h"  /* From Speedy */
 }
 

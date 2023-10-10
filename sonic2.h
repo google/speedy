@@ -32,7 +32,7 @@ extern "C" {
  * can define the original function names (which are what users are calling).
  */
 #define  SONIC_INTERNAL 1
-#include "../sonic/sonic.h"
+#include "sonic.h"
 
 /* Note we are undef'ing only the following sumbols because we redefine them
  * in this file. */
@@ -55,12 +55,12 @@ void sonicDestroyStream(sonicStream mySonicStream);
  * NOTE: One sample corresponds to the values from *all* channels. Thus a stereo
  * signal with N samples has 2*N short values.
  ******************************************************************************/
-int sonicWriteShortToStream(sonicStream mySonicStream, short* inBuffer,
+int sonicWriteShortToStream(sonicStream mySonicStream, const short* inBuffer,
                              int sampleCount);
 int sonicReadShortFromStream(sonicStream mySonicStream, short* outBuffer,
                               int bufferSize);
 /* Samples in floating-point format are assumed to be in the range (-1,1) */
-int sonicWriteFloatToStream(sonicStream mySonicStream, float* inBuffer,
+int sonicWriteFloatToStream(sonicStream mySonicStream, const float* inBuffer,
                              int sampleCount);
 int sonicReadFloatFromStream(sonicStream mySonicStream, float* outBuffer,
                               int bufferSize);

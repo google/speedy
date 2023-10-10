@@ -21,12 +21,12 @@
 #include <utility>
 #include <iostream>
 #include <vector>
-#include "../sonic/sonic.h"
+#include "sonic.h"
 
 extern "C" {
-#include "../sonic/wave.h"
-#include "../speedy/sonic.h"
-#include "../speedy/speedy.h"
+#include "wave.h"
+#include "sonic2.h"
+#include "speedy.h"
 }
 
 double speed = 3.0;
@@ -39,6 +39,29 @@ int match_nonlinear = false;
 /*
  * A simple application that time-compresses one speech file.
  */
+
+/* To test, try these commands 
+   # Linear speedup by 3x
+   speedy_wave  \
+     --input test_data/tapestry.wav \
+     --nonlinear 0.0 --speed 3 --output /tmp/tap_linear.wav
+   # Non-linear speedup (speedy) by a nominal 3x.
+   speedy_wave  \
+     --input test_data/tapestry.wav \
+     --tension_file /tmp/nl_tension.txt --speed_file /tmp/nl_speed.txt \
+     --speed 3 --output /tmp/tap_nonlinear.wav
+   # Non-linear speedup (speedy) by a normalized 3x.
+   speedy_wave  \
+     --input test_data/tapestry.wav --normalization_time 0.01 \
+     --tension_file /tmp/nln_tension.txt --speed_file /tmp/nln_speed.txt \
+     --speed 3 --output /tmp/tap_nonlinear_normed.wav
+   # Linear speedup matched to a 3x non-linear total time
+   speedy_wave  \
+     --input test_data/tapestry.wav \
+     --nonlinear 0.0 --speed 3 --match_nonlinear --output /tmp/tap_matched.wav
+   # To see the computed tension and the resulting speedup, add these arguments
+     --tension_file /tmp/tension.txt --speed_file /tmp/speed.txt
+*/
 
 
 /* Save the tension calculated by the libsonic2 (speedy) calculation.

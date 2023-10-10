@@ -16,7 +16,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "sonic.h"
+#include "sonic2.h"
 #include "speedy.h"
 
 /*
@@ -388,7 +388,7 @@ void sonicSendDataToSpeedy(sonicStream mySonicStream) {
  * more data to do its analysis (50% overlap) so we have to make sure we have
  * enough data to pass a full buffer to Speedy.
 */
-int sonicWriteShortToStream(sonicStream mySonicStream, short* inBuffer,
+int sonicWriteShortToStream(sonicStream mySonicStream, const short* inBuffer,
                             int sampleCount){
   assert(mySonicStream);
 
@@ -454,7 +454,7 @@ int sonicWriteShortToStream(sonicStream mySonicStream, short* inBuffer,
 /* Like above, but convert floats to shorts before saving them into the buffer
  * and processing them.
  */
-int sonicWriteFloatToStream(sonicStream mySonicStream, float* inBuffer,
+int sonicWriteFloatToStream(sonicStream mySonicStream, const float* inBuffer,
                             int sampleCount){
   assert(mySonicStream);
 

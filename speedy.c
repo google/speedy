@@ -47,7 +47,7 @@
 
 /* A simple structure to implement a digital first order filter. */
 struct FirstOrderFilterStruct{
-  float state;
+  float state;  // Double for extra precision for long time constants
   float alpha;
 };
 
@@ -62,7 +62,7 @@ FirstOrderFilter CreateFirstOrderFilter(float time_constant_in_samples) {
 void DesignFirstOrderLowpassFilter(FirstOrderFilter fof,
                                    float time_constant_in_samples) {
   fof->state = 0.0;
-  if(time_constant_in_samples > 0) {
+  if (time_constant_in_samples > 0) {
     fof->alpha = exp(-1.0/time_constant_in_samples);
   } else {
     fof->alpha = 0.0;
@@ -88,7 +88,7 @@ void DeleteFirstOrderFilter(FirstOrderFilter fof) {
 
 #define  kFrameRateHz  100.0    /* in Hz */
 
-/* Make this buffer bigger than necessary to faciliate testing. */
+/* Make this buffer bigger than necessary to facilitate testing. */
 #define  kTemporalHysteresisBufferSize  2*(kTemporalHysteresisFuture+kTemporalHysteresisPast+1)
 
 #define  kSpectrogramBufferSize  (kTemporalHysteresisFuture+kTemporalHysteresisPast+1)
@@ -162,7 +162,10 @@ struct speedyStreamStruct {
 
   struct FirstOrderFilterStruct energy_filter;
   struct FirstOrderFilterStruct difference_filter;
-  struct FirstOrderFilterStruct tension_filter;
+
+  /* Internal state for speed feedback loop. */
+  float current_duration;        /* How much time have we consumed so far? */
+  float desired_duration;        /* How much time should we consume so far? */
 
   /* Internal state for debugging and testing purposes. */
   int skipped_frames;
@@ -284,8 +287,11 @@ speedyStream speedyCreateStream(int sample_rate) {
   DesignFirstOrderLowpassFilter(&stream->difference_filter, kFrameRateHz);
   SetFirstOrderFilterState(&stream->difference_filter,
                            stream->mean_emphasis_weighted_local_difference);
-  speedyUpdateTensionNormalization(stream, 0.0);
   stream->skip_frame_count = 1;          /* Skip the first frame */
+
+  stream->current_duration = 0.0;
+  stream->desired_duration = 0.0;
+
   return stream;
 }
 
@@ -749,29 +755,29 @@ int speedyComputeTension(speedyStream stream, int64_t at_time, float* tension) {
     speedyComputeSpectralDifference(stream, current_spectrogram,
                                     previous_spectrogram, at_time);
     s_audio_tension = a*(s_energy_hysteresis-M_E) + b*(s_speech_changes-M_S);
-    s_audio_tension -= IterateFirstOrderFilter(&stream->tension_filter,
-                                               s_audio_tension);
     *tension = s_audio_tension;
     return 1;
   }
   return 0;
 }
 
-void speedyUpdateTensionNormalization(speedyStream stream,
-                                      float normalizationTime){
-  if (normalizationTime < .01) {  /* less than 10ms */
-    normalizationTime = 1e10;   /* Forever */
-  }
-  DesignFirstOrderLowpassFilter(&stream->tension_filter,
-                                normalizationTime*kFrameRateHz);
-  ResetFirstOrderFilter(&stream->tension_filter);
-}
+float speedyComputeSpeedFromTension(float tension, float R_g,
+                                    float duration_feedback_strength,
+                                    speedyStream stream) {
+  float requested_speed;
 
-
-float speedyComputeSpeedFromTension(float tension, float R_g) {
   if (R_g > 1.0) {
-    return fmax(1, R_g + (1-R_g)*tension);
+    requested_speed = fmax(1, R_g + (1-R_g)*tension);
   } else {
-    return fmin(1, R_g - (1-R_g)*tension);
+    requested_speed = fmin(1, R_g - (1-R_g)*tension);
   }
+  if (duration_feedback_strength > 0){
+    float excess_duration = stream->current_duration - stream->desired_duration;
+    requested_speed += duration_feedback_strength * excess_duration;
+  }
+  float frame_duration = 1.0/kFrameRateHz;
+  stream->current_duration += frame_duration/requested_speed;
+  stream->desired_duration += frame_duration/R_g;
+
+  return requested_speed;
 }

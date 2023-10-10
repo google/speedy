@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../speedy/dynamic_time_warping.h"
+#include "third_party/speedy/dynamic_time_warping.h"
 
 #include <algorithm>
 #include <iomanip>
