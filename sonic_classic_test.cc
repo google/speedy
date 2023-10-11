@@ -21,15 +21,25 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cassert>
 #include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <numeric>
+#include <ostream>
 #include <random>
+#include <string>
+#include <vector>
 
-#include "base/integral_types.h"
-#include "testing/base/public/gunit.h"
+#include "glog/logging.h"
+#include "glog/logging.h"
+
+// // #include "testing/base/public/gunit.h"
+#include "gtest/gtest.h"
 
 extern "C" {
-#include "third_party/sonic/sonic.h"
-#include "third_party/sonic/wave.h"
+#include "sonic.h"
+#include "wave.h"
 }
 
 namespace {
@@ -55,15 +65,15 @@ class SonicTest : public ::testing::Test {
     }
   }
 
-  std::vector<int16> ReadWaveFile(const std::string& fileName,
+  std::vector<int16_t> ReadWaveFile(const std::string& fileName,
                                   int* sampleRate,
                                   int* numChannels);
 
-  std::vector<int16> CompressSound(std::vector<int16>sound_input,
+  std::vector<int16_t> CompressSound(std::vector<int16_t>sound_input,
                                    int sampleRate, int numChannels,
                                    float speedup);
 
-  void RunOneCompressionTest(std::vector<int16>input_sound,
+  void RunOneCompressionTest(std::vector<int16_t>input_sound,
                              int sample_rate, int num_channels,
                              float speedup, std::string test_name,
                              int size_tolerance);
@@ -157,25 +167,25 @@ float LinearSlope(std::vector<T> y) {
 // original frequency.
 TEST_F(SonicTest, TestSpeedup) {
   constexpr int kSampleRate = 22050;
-  constexpr uint32 kPitch = 100;  // In Hz
-  constexpr uint32 kPeriodSamples = kSampleRate / kPitch;
-  constexpr uint32 kAmplitude = 32000;
-  constexpr uint32 kNumPeriods = 100;
+  constexpr uint32_t kPitch = 100;  // In Hz
+  constexpr uint32_t kPeriodSamples = kSampleRate / kPitch;
+  constexpr uint32_t kAmplitude = 32000;
+  constexpr uint32_t kNumPeriods = 100;
   constexpr float kSpeed = 3.0f;
   InitializeStream(kSampleRate, 1);
   sonicSetSpeed(stream_, kSpeed);
-  int16 pitch_period[kPeriodSamples];
+  int16_t pitch_period[kPeriodSamples];
   // We are speeding up, so this is big enough.
-  int16 *output = new int16[kNumPeriods*kPeriodSamples];
+  int16_t *output = new int16_t[kNumPeriods*kPeriodSamples];
   // Compute one cycle of a sinusoid for testing.
-  for (uint32 xSample = 0; xSample < kPeriodSamples; ++xSample) {
+  for (uint32_t xSample = 0; xSample < kPeriodSamples; ++xSample) {
     pitch_period[xSample] =
-        static_cast<int16>(kAmplitude * sin(xSample * 2 * M_PI /
+        static_cast<int16_t>(kAmplitude * sin(xSample * 2 * M_PI /
                                             kPeriodSamples));
   }
   // Feed the sinusoid to libsonic kNumPeriods times and compress the audio.
-  uint32 total_samples = 0;
-  for (uint32 epoch = 0; epoch < kNumPeriods; ++epoch) {
+  uint32_t total_samples = 0;
+  for (uint32_t epoch = 0; epoch < kNumPeriods; ++epoch) {
     EXPECT_TRUE(sonicWriteShortToStream(stream_, pitch_period, kPeriodSamples));
     total_samples += sonicReadShortFromStream(stream_, &output[total_samples],
                                               kPeriodSamples);
@@ -189,7 +199,7 @@ TEST_F(SonicTest, TestSpeedup) {
                                            kPeriodSamples);
     total_samples += new_samples;
   } while (new_samples > 0);
-  uint32 expected_samples = (kNumPeriods * kPeriodSamples) / kSpeed;
+  uint32_t expected_samples = (kNumPeriods * kPeriodSamples) / kSpeed;
   EXPECT_GT(total_samples, (99 * expected_samples) / 100);
   EXPECT_LT(total_samples, (101 * expected_samples) / 100);
   WriteData(output, total_samples, "/tmp/sounds/sonic_fast_compressed.txt");
@@ -219,25 +229,25 @@ TEST_F(SonicTest, TestSpeedup) {
 // Simple test, like above, but slowdown.
 TEST_F(SonicTest, TestSlowdown) {
   constexpr int kSampleRate = 22050;
-  constexpr uint32 kPitch = 100;  // In Hz
-  constexpr uint32 kPeriodSamples = kSampleRate / kPitch;
-  constexpr uint32 kAmplitude = 32000;
-  constexpr uint32 kNumPeriods = 100;
+  constexpr uint32_t kPitch = 100;  // In Hz
+  constexpr uint32_t kPeriodSamples = kSampleRate / kPitch;
+  constexpr uint32_t kAmplitude = 32000;
+  constexpr uint32_t kNumPeriods = 100;
   constexpr float kSpeed = 0.5f;
   InitializeStream(kSampleRate, 1);
   sonicSetSpeed(stream_, kSpeed);
-  int16 pitch_period[kPeriodSamples];
+  int16_t pitch_period[kPeriodSamples];
   // We are slowing down so triple size to be sure we're big enough.
-  int16 *output = new int16[3*kNumPeriods*kPeriodSamples];
+  int16_t *output = new int16_t[3*kNumPeriods*kPeriodSamples];
   // Compute one cycle of a sinusoid for testing.
-  for (uint32 xSample = 0; xSample < kPeriodSamples; ++xSample) {
+  for (uint32_t xSample = 0; xSample < kPeriodSamples; ++xSample) {
     pitch_period[xSample] =
-        static_cast<int16>(kAmplitude * sin(xSample * 2 * M_PI /
+        static_cast<int16_t>(kAmplitude * sin(xSample * 2 * M_PI /
                                             kPeriodSamples));
   }
   // Feed the sinusoid to libsonic kNumPeriods times and compress the audio.
-  uint32 total_samples = 0;
-  for (uint32 epoch = 0; epoch < kNumPeriods; ++epoch) {
+  uint32_t total_samples = 0;
+  for (uint32_t epoch = 0; epoch < kNumPeriods; ++epoch) {
     EXPECT_TRUE(sonicWriteShortToStream(stream_, pitch_period, kPeriodSamples));
     total_samples += sonicReadShortFromStream(stream_, &output[total_samples],
                                               kPeriodSamples);
@@ -251,7 +261,7 @@ TEST_F(SonicTest, TestSlowdown) {
                                            kPeriodSamples);
     total_samples += new_samples;
   } while (new_samples > 0);
-  uint32 expected_samples = (kNumPeriods * kPeriodSamples) / kSpeed;
+  uint32_t expected_samples = (kNumPeriods * kPeriodSamples) / kSpeed;
   EXPECT_GT(total_samples, (99 * expected_samples) / 100);
   EXPECT_LT(total_samples, (101 * expected_samples) / 100);
   WriteData(output, total_samples, "/tmp/sounds/sonic_slow_compressed.txt");
@@ -295,12 +305,12 @@ TEST_F(SonicTest, TestChirpSpeedup) {
   constexpr int kSampleRate = 22050;
   constexpr float kPitch0 = 137;             // In Hz
   constexpr float kPitch3 = kPitch0 + 47;    // at time=3s
-  constexpr uint32 kAmplitude = 32000;
-  constexpr uint32 kNumPeriods = 100;
+  constexpr uint32_t kAmplitude = 32000;
+  constexpr uint32_t kNumPeriods = 100;
   constexpr float kTotalLength = 3.0;
-  constexpr uint32 kTotalSamples = static_cast<int>(kTotalLength * kSampleRate);
-  int16* chirp = new int16[kTotalSamples];
-  int16* output = new int16[kTotalSamples];
+  constexpr uint32_t kTotalSamples = static_cast<int>(kTotalLength * kSampleRate);
+  int16_t* chirp = new int16_t[kTotalSamples];
+  int16_t* output = new int16_t[kTotalSamples];
   assert(chirp); assert(output);
   constexpr float kSpeed = 3.0f;
 
@@ -308,11 +318,11 @@ TEST_F(SonicTest, TestChirpSpeedup) {
 
   // Compute a chirp that speeds up in the middle second. (Need a chirp so we
   // can tell where we are in the waveform.)
-  for (uint32 i = 0; i < kTotalSamples; ++i) {
+  for (uint32_t i = 0; i < kTotalSamples; ++i) {
     float t = i/static_cast<float>(kSampleRate);
     // From https://en.wikipedia.org/wiki/Chirp
     float phase = kPitch0*t + (kPitch3-kPitch0)/3*t*t/2.0;  // units are cycles
-    chirp[i] = static_cast<int16>(kAmplitude * sin(2*M_PI*phase));
+    chirp[i] = static_cast<int16_t>(kAmplitude * sin(2*M_PI*phase));
   }
   WriteData(chirp, kTotalSamples, "/tmp/sounds/chirp_original.txt");
   std::vector<float> teagerVec;
@@ -331,8 +341,8 @@ TEST_F(SonicTest, TestChirpSpeedup) {
                                       kSampleRate));
 
   // Read back the results.
-  uint32 totalSamples = 0;
-  for (uint32 epoch = 0; epoch < kNumPeriods; ++epoch) {
+  uint32_t totalSamples = 0;
+  for (uint32_t epoch = 0; epoch < kNumPeriods; ++epoch) {
     totalSamples += sonicReadShortFromStream(stream_, &output[totalSamples],
                                              kTotalSamples-totalSamples);
   }
@@ -430,12 +440,12 @@ ylim([130, 190])
 */
 
 
-std::vector<int16> SonicTest::ReadWaveFile(const std::string& fileName,
+std::vector<int16_t> SonicTest::ReadWaveFile(const std::string& fileName,
                                            int* sampleRate,
                                            int* numChannels) {
-  const int32 kBufferSize = 1024;
-  int16 buffer[kBufferSize];
-  std::vector<int16>outputVector;
+  const int32_t kBufferSize = 1024;
+  int16_t buffer[kBufferSize];
+  std::vector<int16_t>outputVector;
   auto fp = openInputWaveFile(fileName.c_str(), sampleRate, numChannels);
   EXPECT_TRUE(fp);
   if (fp) {
@@ -453,16 +463,16 @@ std::vector<int16> SonicTest::ReadWaveFile(const std::string& fileName,
 
 // Run one compression test using a monaural input, and make sure the output
 // has the correct size.
-std::vector<int16> SonicTest::CompressSound(std::vector<int16>sound_input,
+std::vector<int16_t> SonicTest::CompressSound(std::vector<int16_t>sound_input,
                                             int sampleRate, int numChannels,
                                             float speedup) {
   InitializeStream(sampleRate, numChannels);
   const int kBufferSize = 1024;   // Number of time steps (multichannel samples)
-  int16 *sound_buffer = new int16[kBufferSize * numChannels];
-  std::vector<int16> sound_output;
+  int16_t *sound_buffer = new int16_t[kBufferSize * numChannels];
+  std::vector<int16_t> sound_output;
   sonicSetSpeed(stream_, speedup);
   int num_time_steps = sound_input.size()/numChannels;
-  for (uint32 t = 0; t < num_time_steps; t += kBufferSize) {
+  for (uint32_t t = 0; t < num_time_steps; t += kBufferSize) {
     // The index t is in terms of time stamps, as is the this_buffer_size.
     // Multiply by num_channels to get the number of values we are passing.
     int this_buffer_size = imin(kBufferSize, num_time_steps - t);
@@ -491,14 +501,14 @@ std::vector<int16> SonicTest::CompressSound(std::vector<int16>sound_input,
 
 // Run one compression test using a monaural input, and make sure the output
 // has the correct size.
-void SonicTest::RunOneCompressionTest(std::vector<int16>input_sound,
+void SonicTest::RunOneCompressionTest(std::vector<int16_t>input_sound,
                                       int sample_rate, int num_channels,
                                       float speedup, std::string test_name,
                                       int size_tolerance) {
   printf("RunOneCompressionTest for %s:\n", test_name.c_str());
   auto compressed_sound = CompressSound(input_sound, sample_rate, num_channels,
                                         speedup);
-  int64 expected_sample_count = input_sound.size()/speedup;
+  int64_t expected_sample_count = input_sound.size()/speedup;
   printf("%g: Expected size is %05ld, actual is %05ld, difference is %ld.\n",
          speedup, expected_sample_count, compressed_sound.size(),
          compressed_sound.size() - expected_sample_count);
@@ -508,7 +518,7 @@ void SonicTest::RunOneCompressionTest(std::vector<int16>input_sound,
 // Test Sonic using a real speech utterance, and over a range of speedups. Make
 // sure the final lengths are right.
 TEST_F(SonicTest, TestFullSpeechRange) {
-  std::string fullFileName = FLAGS_test_srcdir +
+  std::string fullFileName = 
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -527,8 +537,8 @@ TEST_F(SonicTest, TestFullSpeechRange) {
 // Now do a Sonic test using a long stereo example (which tweaked an earlier
 // version of libsonic.) Make sure the final lengths are right.
 TEST_F(SonicTest, TestLongStereoSpeechRange) {
-  std::string fullFileName = FLAGS_test_srcdir +
-      "/google3/third_party/speedy/test_data/capture_1_00x.wav";
+  std::string fullFileName = 
+      "test_data/capture_1_00x.wav";
   int sampleRate, numChannels;
   auto soundInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
   ASSERT_GT(soundInts.size(), 0);
@@ -546,12 +556,12 @@ TEST_F(SonicTest, TestLongStereoSpeechRange) {
 // Test libsonic with a noisy (unvoiced) waveform.
 TEST_F(SonicTest, TestFullNoiseRange) {
   const int kSampleRate = 16000;
-  std::vector<int16> noiseInts;
+  std::vector<int16_t> noiseInts;
   std::default_random_engine generator;
   std::normal_distribution<float> distribution(0.0, 1.0);
   for (int i=0; i < 50000; i++) {
     float f = distribution(generator) * 8096;
-    int16 s = static_cast<int16>(fmax(-32000, std::fmin(32000, f)));
+    int16_t s = static_cast<int16_t>(fmax(-32000, std::fmin(32000, f)));
     noiseInts.push_back(s);
   }
 
@@ -571,10 +581,10 @@ TEST_F(SonicTest, TestSinusoidStereoMatch) {
   const int sample_rate = 16000, num_channels = 1, num_samples = sample_rate;
 
   // Create the monaural stereo sample and speed it up.
-  std::vector<int16> sinusoid_mono;
+  std::vector<int16_t> sinusoid_mono;
   for (int i=0; i < num_samples; i++) {
     const float F0 = 440;
-    int16 sample = 16000*sin(2*M_PI*F0*i/(float)sample_rate);
+    int16_t sample = 16000*sin(2*M_PI*F0*i/(float)sample_rate);
     sinusoid_mono.push_back(sample);
   }
   auto wave_fp = openOutputWaveFile("/tmp/sounds/original_sinusoid.wav",
@@ -599,8 +609,8 @@ TEST_F(SonicTest, TestSinusoidStereoMatch) {
             "/tmp/sounds/mono_teager.txt");
 
   // Copy the monaural sinusoid into a stereo vector (by duplicating samples.)
-  std::vector<int16> sinusoid_stereo;
-  for (int16 sample : sinusoid_mono) {
+  std::vector<int16_t> sinusoid_stereo;
+  for (int16_t sample : sinusoid_mono) {
     sinusoid_stereo.push_back(sample);
     sinusoid_stereo.push_back(sample);
   }
@@ -620,7 +630,7 @@ TEST_F(SonicTest, TestSinusoidStereoMatch) {
     closeWaveFile(wave_fp);
   }
   // Look for glitches using the Teager operator
-  std::vector<int16> left_stereo;
+  std::vector<int16_t> left_stereo;
   for (int i=0; i < stereo_spedup.size()/2; i++) {
     left_stereo.push_back(stereo_spedup[2*i]);
   }
@@ -656,8 +666,8 @@ TEST_F(SonicTest, TestSinusoidStereoMatch) {
 
 
 TEST_F(SonicTest, TestStereoMatch) {
-  std::string fullFileName = FLAGS_test_srcdir +
-      "/google3/third_party/speedy/test_data/tapestry.wav";
+  std::string fullFileName = 
+      "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestry_mono = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
   EXPECT_EQ(tapestry_mono.size(), 50381);
@@ -674,8 +684,8 @@ TEST_F(SonicTest, TestStereoMatch) {
     writeToWaveFile(wave_fp, &mono_spedup[0], mono_spedup.size());
     closeWaveFile(wave_fp);
   }
-  std::vector<int16> tapestry_stereo;
-  for (int16 sample : tapestry_mono) {
+  std::vector<int16_t> tapestry_stereo;
+  for (int16_t sample : tapestry_mono) {
     tapestry_stereo.push_back(sample);
     tapestry_stereo.push_back(sample);
   }
@@ -697,3 +707,9 @@ TEST_F(SonicTest, TestStereoMatch) {
 }
 
 }  // namespace
+
+int main(int argc, char **argv) {
+  testing::InitGoogleTest(&argc, argv);
+
+  return RUN_ALL_TESTS();
+}

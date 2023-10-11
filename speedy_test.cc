@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include <math.h>
+#include <algorithm>
+#include <cassert>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,13 +23,14 @@
 #include <cmath>
 #include <cstdint>
 #include <numeric>
+#include <sstream>
 #include <string>
 #include <vector>
 
-#include "file/base/file.h"
-#include "file/base/filelineiter.h"
-#include "testing/base/public/gunit.h"
-#include "absl/flags/flag.h"
+// #include "testing/base/public/googletest.h"
+// // #include "testing/base/public/gunit.h"
+#include "gtest/gtest.h"
+
 #include "sonic.h"
 
 extern "C" {
@@ -532,7 +536,7 @@ TEST_F(SpeedyTest, TestTension) {
 // is close to zero, and the global speedup is close to what we asked for.
 TEST_F(SpeedyTest, TestRealSpeech) {
   std::string fullFileName =
-      absl::GetFlag(FLAGS_test_srcdir) +
+      
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -595,7 +599,7 @@ TEST_F(SpeedyTest, TestRealSpeech) {
 // closer to the requested global speed.
 TEST_F(SpeedyTest, TestRealSpeechNormalized) {
   std::string fullFileName =
-      absl::GetFlag(FLAGS_test_srcdir) +
+      
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -650,7 +654,7 @@ TEST_F(SpeedyTest, TestRealSpeechNormalized) {
 
 float MeasureExcessDuration(float feedbackStrength){
   std::string fullFileName =
-      absl::GetFlag(FLAGS_test_srcdir) +
+      
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -755,14 +759,19 @@ TEST_F(SpeedyTest, TestFeatureReturn) {
 }
 
 std::vector<std::vector<float>> ReadFloatMatrix(std::string filename) {
-  std::string full_filename = absl::GetFlag(FLAGS_test_srcdir) +
+  std::string full_filename = 
                               "test_data/" +
                               filename;
-  File* file_pointer = file::OpenOrDie(full_filename, "r", file::Defaults());
+
+  std::ifstream file_pointer(full_filename);
+
   std::vector<std::vector<float>> my_data;
   int row_number = 0;
-  for (std::string& line : FileLines(
-           file_pointer, FileLineIterator::REMOVE_POUND_COMMENTS, 10000)) {
+  std::string line;
+  while (getline(file_pointer, line)){
+    if (line[0] == '#'){
+      continue;
+    }
     float value;
     std::stringstream ss(line);
 
@@ -869,7 +878,7 @@ TEST_F(SpeedyTest, TestTapestryFeatureComputations) {
    * Matlab reference code.
    */
   std::string fullFileName =
-      absl::GetFlag(FLAGS_test_srcdir) +
+      
       "test_data/tapestry22050.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -1089,3 +1098,10 @@ xlabel(string(datetime))
 
 
 }  // namespace
+
+
+int main(int argc, char **argv) {
+  testing::InitGoogleTest(&argc, argv);
+
+  return RUN_ALL_TESTS();
+}

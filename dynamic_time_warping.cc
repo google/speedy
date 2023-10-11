@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "third_party/speedy/dynamic_time_warping.h"
+#include "dynamic_time_warping.h"
 
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <utility>
 
-#include "base/logging.h"
-#include "absl/synchronization/mutex.h"
+#include "glog/logging.h"
+#include <cassert>
+
 
 DynamicTimeWarping::DynamicTimeWarping(
     std::size_t dimension,
@@ -33,7 +34,7 @@ float DynamicTimeWarping::Compute(
     const std::vector<std::vector<float>>& sequence2) const {
   CheckInput(sequence1, sequence2);
 
-  absl::MutexLock lock(&mutex_);
+  // absl::MutexLock lock(&mutex_);
   ComputeCostMatrix(sequence1, sequence2);
   return ComputeFromCostMatrix(sequence1.size(), sequence2.size());
 }
@@ -107,7 +108,7 @@ void DynamicTimeWarping::BestPathSequence(
   const auto height = sequence1.size();
   const auto width = sequence2.size();
 
-  absl::MutexLock lock(&mutex_);
+  // absl::MutexLock lock(&mutex_);
   for (int i = height - 1, j = width - 1; i >= 0 && j >= 0;) {
     switch (best_directions_[i * width + j]) {
       case -1:
@@ -135,7 +136,7 @@ void DynamicTimeWarping::DisplayDebugInformation(
     const std::vector<std::vector<float>>& sequence2) const {
   const auto height = sequence1.size();
   const auto width = sequence2.size();
-  absl::MutexLock lock(&mutex_);
+  // absl::MutexLock lock(&mutex_);
   std::cout << "Cost matrix:" << std::endl;
   for (int i = 0; i < height; ++i) {
     for (int j = 0; j < width; ++j) {

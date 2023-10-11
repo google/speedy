@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "testing/base/public/gunit.h"
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+// // #include "testing/base/public/gunit.h"
+#include "gtest/gtest.h"  // For external testing
 
 extern "C" {
 #include "kiss_fft.h"
-#include "kiss_fft_impl.h"
+
 }
 
 namespace {
@@ -51,12 +55,12 @@ TEST_F(KissFftTest, BasicTest) {
   kiss_fft_cpx fin[N], fout[N];
 
   kiss_fft_cfg kiss_forward = kiss_fft_alloc(N, 0, NULL, NULL);
-  for (int i=0; i<N; i++) {
+  for (int i=0; i < N; i++) {
     fin[i].r = cos(2*M_PI*i/static_cast<float>(N));
     fin[i].i = 0.0;
   }
   kiss_fft(kiss_forward, fin, fout);
-  for (int i=0; i<N; i++) {
+  for (int i=0; i < N; i++) {
     printf("%d: %g, %g\n", i, fout[i].r, fout[i].i);
   }
   EXPECT_NEAR(fout[0].r, 0, kTolerance); EXPECT_NEAR(fout[0].i, 0, kTolerance);
@@ -71,7 +75,7 @@ TEST_F(KissFftTest, BasicTest) {
   kiss_fft_cfg kiss_backward = kiss_fft_alloc(N, 1, NULL, NULL);
   kiss_fft(kiss_backward, fout, fin);
 
-  for (int i=0; i<N; i++) {
+  for (int i=0; i < N; i++) {
     float expected = N*cos(2*M_PI*i/static_cast<float>(N));
     EXPECT_NEAR(fin[i].r, expected, kTolerance);
     EXPECT_NEAR(fin[i].i, 0, kTolerance);
@@ -84,13 +88,8 @@ TEST_F(KissFftTest, BasicTest) {
 
 }  // namespace
 
-// Edit your BUILD file to link against //testing/base/public:gunit_main,
-// or use your own main().  http://goto/gunitprimer#Writing_the_main_Function
-/*
 int main(int argc, char **argv) {
-  absl::SetFlag(&FLAGS_logtostderr, true);
-  InitGoogle(argv[0], &argc, &argv, true);
+  testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-*/

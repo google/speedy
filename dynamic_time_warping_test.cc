@@ -17,15 +17,15 @@
 
 #include <cmath>
 #include <vector>
-// #include "testing/base/public/gunit.h"
+// // #include "testing/base/public/gunit.h"
 #include "gtest/gtest.h"
 
 namespace {
 // Computes the Euclidean distance between two points.
 float distance(const std::vector<float>& sequence1,
                const std::vector<float>& sequence2) {
-  CHECK_EQ(sequence1.size(), 1);
-  CHECK_EQ(sequence2.size(), 1);
+  EXPECT_EQ(sequence1.size(), 1);
+  EXPECT_EQ(sequence2.size(), 1);
   return std::fabs(sequence1[0] - sequence2[0]);
 }
 TEST(DynamicTimeWarpingTest, IdenticalSequences) {
@@ -80,3 +80,10 @@ TEST(DynamicTimeWarpingTest, DownsampledSequence) {
   EXPECT_EQ(path2, expected2);
 }
 }  // namespace
+
+
+int main(int argc, char **argv) {
+  testing::InitGoogleTest(&argc, argv);
+
+  return RUN_ALL_TESTS();
+}

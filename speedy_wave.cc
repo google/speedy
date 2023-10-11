@@ -40,23 +40,24 @@ int match_nonlinear = false;
  * A simple application that time-compresses one speech file.
  */
 
-/* To test, try these commands 
+/* To test, try these commands from a CITC client.
+   cd third_party/speedy
    # Linear speedup by 3x
-   speedy_wave  \
+   ../../blaze-bin/speedy_wave  \
      --input test_data/tapestry.wav \
      --nonlinear 0.0 --speed 3 --output /tmp/tap_linear.wav
    # Non-linear speedup (speedy) by a nominal 3x.
-   speedy_wave  \
+   ../../blaze-bin/speedy_wave \
      --input test_data/tapestry.wav \
      --tension_file /tmp/nl_tension.txt --speed_file /tmp/nl_speed.txt \
      --speed 3 --output /tmp/tap_nonlinear.wav
    # Non-linear speedup (speedy) by a normalized 3x.
-   speedy_wave  \
+   ../../blaze-bin/speedy_wave \
      --input test_data/tapestry.wav --normalization_time 0.01 \
      --tension_file /tmp/nln_tension.txt --speed_file /tmp/nln_speed.txt \
      --speed 3 --output /tmp/tap_nonlinear_normed.wav
    # Linear speedup matched to a 3x non-linear total time
-   speedy_wave  \
+   ../../blaze-bin/speedy_wave \
      --input test_data/tapestry.wav \
      --nonlinear 0.0 --speed 3 --match_nonlinear --output /tmp/tap_matched.wav
    # To see the computed tension and the resulting speedup, add these arguments

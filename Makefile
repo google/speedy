@@ -24,5 +24,38 @@ soniclib.o: sonic2.h speedy.h
 speedy.o: speedy.h
 
 clean:
-	rm *.o *.so
+	rm -f *.o *.so speedy_wave soniclib.o libspeedy.so 
+	rm -f kiss_fft_test dynamic_time_warping_test sonic_classic_test sonic_test speedy_test
 
+# For the tests that follow, you will probably need to set your LD_LIBRARY_PATH
+# to point to the library locations.  For example:
+#		export LD_LIBRARY_PATH=/usr/local/lib:../kissfft:../sonic
+
+test: kiss_fft_test dynamic_time_warp_test sonic_classic_test sonic_test speedy_test
+	
+
+kiss_fft_test: kiss_fft_test.cc
+	g++ -DKISS_FFT -I../kissfft kiss_fft_test.cc ../kissfft/libkissfft-float.so \
+		-o kiss_fft_test -lgtest
+	./kiss_fft_test
+
+dynamic_time_warping_test: dynamic_time_warping_test.cc
+	g++ dynamic_time_warping_test.cc dynamic_time_warping.cc -lgtest -lglog \
+	  -o dynamic_time_warping_test
+	./dynamic_time_warping_test
+
+sonic_classic_test: sonic_classic_test.cc
+	g++ sonic_classic_test.cc ../sonic/libsonic.so -lgtest -lglog -I../sonic \
+	  -o sonic_classic_test
+	./sonic_classic_test
+
+sonic_test: sonic_test.cc
+	g++ sonic_test.cc speedy.c soniclib.c dynamic_time_warping.cc \
+		../sonic/libsonic_internal.so -lgtest -lglog -I../sonic \
+		-o sonic_test -lfftw3
+	./sonic_test
+
+speedy_test: speedy_test.cc
+	 g++ speedy_test.cc speedy.c soniclib.c dynamic_time_warping.cc \
+	   ../sonic/libsonic_internal.so -lgtest -lglog -I../sonic  \
+		 -o speedy_test -lfftw3

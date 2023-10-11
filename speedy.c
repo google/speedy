@@ -29,9 +29,10 @@
 
 #include "speedy.h"
 #include <assert.h>
-#include <complex.h>
+#include <complex.h>   // IWYU pragma: keep
 #include <math.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -456,14 +457,15 @@ float* speedySpectrogram(speedyStream stream, float input[]) {
   assert(stream);
   int i;
   for (i=0; i < stream->window_size; i++) {
-    stream->input_buffer[i] = input[i] * stream->window[i];
+    stream->input_buffer[i] = CMPLX(input[i] * stream->window[i], 0);
   }
   for (i=stream->window_size; i < stream->fft_size; i++) {
-    stream->input_buffer[i] = 0.0;
+    stream->input_buffer[i] = CMPLX(0, 0);
   }
   fftw_execute(stream->spectrogram_plan); /* repeat as needed */
   for (i=0; i < stream->fft_size; i++) {
-    stream->spectrogram[i] = cabs(stream->fft_buffer[i]);
+    complex double b = stream->fft_buffer[i];
+    stream->spectrogram[i] = cabs(b);
   }
   return stream->spectrogram;
 }

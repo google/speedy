@@ -12,16 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// #include "file/base/file.h"
+#include <cmath>
+#include <numeric>
+
 #include "dynamic_time_warping.h"
+// // #include "testing/base/public/gunit.h"
 #include "gtest/gtest.h"
+
+#include "glog/logging.h"
+#include "glog/logging.h"
 
 /*
  * Lots of asserts in the C code, so test with:
  *   blaze test :sonic2_test -c dbg --copt=-gmlt
  * Otherwise asserts are ignored in gunit (because it assumes production mode.)
  * To get the debugging files, must run the binary (outside of blaze)
- *   ../../blaze-bin/third_party/speedy/sonic2_test
+ *   ../../blaze-bin/sonic2_test
  * Then copy to gcloud
  *   gsutil -m cp /tmp/sounds/[a-z]* gs://speedytestaudio.appspot.com/tmp/
  * and view at
@@ -458,8 +464,8 @@ void ExtractChannel(const std::vector<T> source, std::vector<T>* output,
  * Make sure we can access and properly read our test audio files.
  */
 TEST_F(Sonic2Test, TestReadWave) {
-  std::string fullFileName = FLAGS_test_srcdir +
-      "/google3/third_party/speedy/test_data/tapestry.wav";
+  std::string fullFileName = 
+      "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryVector = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
   EXPECT_EQ(tapestryVector.size(), 50381);
@@ -633,8 +639,8 @@ TEST_F(Sonic2Test, TestWithFloatSinusoids) {
 /* Test basic speech speedup (comparing both linear and nonlinear).
  */
 TEST_F(Sonic2Test, TestSpeechSample) {
-  std::string inputFileName = FLAGS_test_srcdir +
-      "/google3/third_party/speedy/test_data/tapestry.wav";
+  std::string inputFileName = 
+      "test_data/tapestry.wav";
   int channelCount, sampleRate;
   auto original_samples = ReadWaveFile(inputFileName,
                                        &sampleRate, &channelCount);
@@ -864,8 +870,8 @@ TEST_F(Sonic2Test, TestStereoSinusoid) {
 TEST_F(Sonic2Test, TestStereoTapestry) {
   const float kSpeed = 3.0;
 
-  std::string testDirName = "/google3/third_party/speedy/test_data/";
-  std::string inputFileName = FLAGS_test_srcdir + testDirName + "tapestry.wav";
+  std::string testDirName = "test_data/";
+  std::string inputFileName =  testDirName + "tapestry.wav";
   int channelCount, sampleRate;
   auto original_samples = ReadWaveFile(inputFileName,
                                        &sampleRate, &channelCount);
@@ -1035,3 +1041,10 @@ INSTANTIATE_TEST_SUITE_P(TestSuiteWithVaryingSpeed,
                          test_values);
 
 }  // namespace
+
+
+int main(int argc, char **argv) {
+  testing::InitGoogleTest(&argc, argv);
+
+  return RUN_ALL_TESTS();
+}

@@ -20,7 +20,7 @@
 #include <functional>
 #include <vector>
 
-#include "absl/synchronization/mutex.h"
+// #include "third_party/absl/synchronization/mutex.h"
 
 // A class that implements dynamic time warping for n-dimensional time series
 // comparison.
@@ -66,8 +66,8 @@ class DynamicTimeWarping {
   // `dimension`.
   // Dies with a fatal error if any point is not of dimensionality `dimension`.
   float Compute(const std::vector<std::vector<float>>& sequence1,
-                const std::vector<std::vector<float>>& sequence2) const
-      ABSL_LOCKS_EXCLUDED(mutex_);
+                const std::vector<std::vector<float>>& sequence2) const;
+      // ABSL_LOCKS_EXCLUDED(mutex_);
 
   // Returns the best path found via dynamic-time warping. Must first call the
   // function Compute() before calling this function, with the original
@@ -95,20 +95,22 @@ class DynamicTimeWarping {
   // Computes the cost matrix and stores it into the local (mutable) cache.
   void ComputeCostMatrix(
       const std::vector<std::vector<float>>& sequence1,
-      const std::vector<std::vector<float>>& sequence2) const
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+      const std::vector<std::vector<float>>& sequence2) const;
+      // ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Computes the optimal cost from the current non-accumulumated cost matrix.
-  float ComputeFromCostMatrix(int height, int width) const
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  float ComputeFromCostMatrix(int height, int width) const;
+      // ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  mutable absl::Mutex mutex_;
+  // mutable absl::Mutex mutex_;
   const std::size_t dimension_;
   const std::function<float(const std::vector<float>&,
                             const std::vector<float>&)>
       distance_;
-  mutable std::vector<float> cost_matrix_ ABSL_GUARDED_BY(mutex_);
-  mutable std::vector<int> best_directions_ ABSL_GUARDED_BY(mutex_);
+  // mutable std::vector<float> cost_matrix_ ABSL_GUARDED_BY(mutex_);
+  // mutable std::vector<int> best_directions_ ABSL_GUARDED_BY(mutex_);
+  mutable std::vector<float> cost_matrix_;
+  mutable std::vector<int> best_directions_;
 
   // Distance helper function.  Returns an indication of which values is
   // smallest. -1 if a is smallest, 0 if the middle is smallest, +1 if c is

@@ -55,7 +55,7 @@ void sonicDestroyStream(sonicStream mySonicStream);
  * NOTE: One sample corresponds to the values from *all* channels. Thus a stereo
  * signal with N samples has 2*N short values.
  ******************************************************************************/
-int sonicWriteShortToStream(sonicStream mySonicStream, const short* inBuffer,
+int sonicWriteShortToStream(sonicStream mySonicStream, const short int* inBuffer,
                              int sampleCount);
 int sonicReadShortFromStream(sonicStream mySonicStream, short* outBuffer,
                               int bufferSize);
