@@ -45,6 +45,8 @@ extern "C" {
 #undef sonicFlushStream
 #undef sonicSetSpeed
 #undef sonicSetRate
+#undef sonicSetDurationFeedbackStrength
+#undef sonicEnableNonlinearSpeedup
 
 
 #undef   SONIC_UPGRADE

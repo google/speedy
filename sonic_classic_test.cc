@@ -32,10 +32,9 @@
 #include <vector>
 
 #include "glog/logging.h"
-#include "glog/logging.h"
+#include "glog/logging.h"   // Needed for external testing
 
-// // #include "testing/base/public/gunit.h"
-#include "gtest/gtest.h"
+#include "gtest/gtest.h"   // Needed for external testing
 
 extern "C" {
 #include "sonic.h"

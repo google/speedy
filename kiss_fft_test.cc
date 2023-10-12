@@ -15,12 +15,10 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
-// // #include "testing/base/public/gunit.h"
-#include "gtest/gtest.h"  // For external testing
+#include "gtest/gtest.h"  // Needed for external testing
 
 extern "C" {
 #include "kiss_fft.h"
-
 }
 
 namespace {

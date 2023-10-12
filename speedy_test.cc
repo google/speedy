@@ -27,10 +27,7 @@
 #include <string>
 #include <vector>
 
-// #include "testing/base/public/googletest.h"
-// // #include "testing/base/public/gunit.h"
-#include "gtest/gtest.h"
-
+#include "gtest/gtest.h"  // Needed for external testing
 #include "sonic.h"
 
 extern "C" {
@@ -542,6 +539,7 @@ TEST_F(SpeedyTest, TestRealSpeech) {
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
   EXPECT_EQ(tapestryInts.size(), 50381);
   std::vector<float> tapestryVector(tapestryInts.begin(), tapestryInts.end());
+  EXPECT_EQ(tapestryInts[0], 15);  // Make sure input data is non-zero
 
   constexpr int kFrameRate = 100;                // Frames per second
   // stepSize is a float because the step size might not be an integer

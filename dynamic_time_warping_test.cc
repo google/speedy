@@ -17,8 +17,7 @@
 
 #include <cmath>
 #include <vector>
-// // #include "testing/base/public/gunit.h"
-#include "gtest/gtest.h"
+#include "gtest/gtest.h"  // Needed for external testing
 
 namespace {
 // Computes the Euclidean distance between two points.
