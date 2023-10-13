@@ -458,14 +458,24 @@ float* speedySpectrogram(speedyStream stream, float input[]) {
   int i;
   for (i=0; i < stream->window_size; i++) {
     stream->input_buffer[i] = CMPLX(input[i] * stream->window[i], 0);
+    // You might have to replace the statement above with the 2 below.
+    // stream->input_buffer[i][0] = input[i] * stream->window[i];
+    // stream->input_buffer[i][1] = 0;
   }
   for (i=stream->window_size; i < stream->fft_size; i++) {
     stream->input_buffer[i] = CMPLX(0, 0);
+    // You might have to replace the statement above with the 2 below.
+    // stream->input_buffer[i][0] = 0;
+    // stream->input_buffer[i][1] = 0;
   }
   fftw_execute(stream->spectrogram_plan); /* repeat as needed */
   for (i=0; i < stream->fft_size; i++) {
     complex double b = stream->fft_buffer[i];
     stream->spectrogram[i] = cabs(b);
+    // You might have to replace the 2 lines above with the 3 below.
+    // double re = stream->fft_buffer[i][0];
+    // double im = stream->fft_buffer[i][1];
+    // stream->spectrogram[i] = sqrt(re*re + im*im);
   }
   return stream->spectrogram;
 }
