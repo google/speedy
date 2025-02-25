@@ -517,7 +517,8 @@ void SonicTest::RunOneCompressionTest(std::vector<int16_t>input_sound,
 // Test Sonic using a real speech utterance, and over a range of speedups. Make
 // sure the final lengths are right.
 TEST_F(SonicTest, TestFullSpeechRange) {
-  std::string fullFileName = 
+  std::string fullFileName =
+      ::testing::SrcDir() +
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -536,7 +537,8 @@ TEST_F(SonicTest, TestFullSpeechRange) {
 // Now do a Sonic test using a long stereo example (which tweaked an earlier
 // version of libsonic.) Make sure the final lengths are right.
 TEST_F(SonicTest, TestLongStereoSpeechRange) {
-  std::string fullFileName = 
+  std::string fullFileName =
+      ::testing::SrcDir() +
       "test_data/capture_1_00x.wav";
   int sampleRate, numChannels;
   auto soundInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -665,7 +667,8 @@ TEST_F(SonicTest, TestSinusoidStereoMatch) {
 
 
 TEST_F(SonicTest, TestStereoMatch) {
-  std::string fullFileName = 
+  std::string fullFileName =
+      ::testing::SrcDir() +
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestry_mono = ReadWaveFile(fullFileName, &sampleRate, &numChannels);

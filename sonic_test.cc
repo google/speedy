@@ -463,7 +463,8 @@ void ExtractChannel(const std::vector<T> source, std::vector<T>* output,
  * Make sure we can access and properly read our test audio files.
  */
 TEST_F(Sonic2Test, TestReadWave) {
-  std::string fullFileName = 
+  std::string fullFileName =
+      ::testing::SrcDir() +
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryVector = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -638,7 +639,8 @@ TEST_F(Sonic2Test, TestWithFloatSinusoids) {
 /* Test basic speech speedup (comparing both linear and nonlinear).
  */
 TEST_F(Sonic2Test, TestSpeechSample) {
-  std::string inputFileName = 
+  std::string inputFileName =
+      ::testing::SrcDir() +
       "test_data/tapestry.wav";
   int channelCount, sampleRate;
   auto original_samples = ReadWaveFile(inputFileName,
@@ -870,7 +872,8 @@ TEST_F(Sonic2Test, TestStereoTapestry) {
   const float kSpeed = 3.0;
 
   std::string testDirName = "test_data/";
-  std::string inputFileName =  testDirName + "tapestry.wav";
+  std::string inputFileName =
+      ::testing::SrcDir() + testDirName + "tapestry.wav";
   int channelCount, sampleRate;
   auto original_samples = ReadWaveFile(inputFileName,
                                        &sampleRate, &channelCount);

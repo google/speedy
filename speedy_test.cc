@@ -13,15 +13,15 @@
 // limitations under the License.
 
 #include <math.h>
-#include <algorithm>
-#include <cassert>
-#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <fstream>
 #include <numeric>
 #include <sstream>
 #include <string>
@@ -533,7 +533,7 @@ TEST_F(SpeedyTest, TestTension) {
 // is close to zero, and the global speedup is close to what we asked for.
 TEST_F(SpeedyTest, TestRealSpeech) {
   std::string fullFileName =
-      
+      ::testing::SrcDir() +
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -597,7 +597,7 @@ TEST_F(SpeedyTest, TestRealSpeech) {
 // closer to the requested global speed.
 TEST_F(SpeedyTest, TestRealSpeechNormalized) {
   std::string fullFileName =
-      
+      ::testing::SrcDir() +
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -652,7 +652,7 @@ TEST_F(SpeedyTest, TestRealSpeechNormalized) {
 
 float MeasureExcessDuration(float feedbackStrength){
   std::string fullFileName =
-      
+      ::testing::SrcDir() +
       "test_data/tapestry.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -757,9 +757,8 @@ TEST_F(SpeedyTest, TestFeatureReturn) {
 }
 
 std::vector<std::vector<float>> ReadFloatMatrix(std::string filename) {
-  std::string full_filename = 
-                              "test_data/" +
-                              filename;
+  std::string full_filename =
+      ::testing::SrcDir() + "test_data/" + filename;
 
   std::ifstream file_pointer(full_filename);
 
@@ -876,7 +875,7 @@ TEST_F(SpeedyTest, TestTapestryFeatureComputations) {
    * Matlab reference code.
    */
   std::string fullFileName =
-      
+      ::testing::SrcDir() +
       "test_data/tapestry22050.wav";
   int sampleRate, numChannels;
   auto tapestryInts = ReadWaveFile(fullFileName, &sampleRate, &numChannels);
@@ -1055,6 +1054,25 @@ TEST_F(SpeedyTest, TestTapestryFeatureComputations) {
     EXPECT_GT(best_delay_snr, feature_list[feature_num].threshold) <<
         "Feature #" << feature_num << " " << feature_list[feature_num].name;
   }
+}
+
+TEST_F(SpeedyTest, TestNegativeSpeedInput) {
+  int sampleRate = 0;
+  int numChannels = 0;
+  std::string fullFileName =
+      ::testing::SrcDir() +
+      "test_data/negative_speed.wav";
+  std::vector<int16_t> samples =
+      ReadWaveFile(fullFileName, &sampleRate, &numChannels);
+
+  sonicStream mySonicStream = sonicCreateStream(sampleRate, numChannels);
+  sonicSetSpeed(mySonicStream, 0.25f);
+
+  sonicEnableNonlinearSpeedup(mySonicStream, /*nonlinearFactor=*/1.0f);
+
+  ASSERT_TRUE(
+      sonicWriteShortToStream(mySonicStream, samples.data(), samples.size()));
+  sonicDestroyStream(mySonicStream);
 }
 
 /* To plot the results stored in the test_feature file, use the following

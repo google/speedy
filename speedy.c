@@ -88,6 +88,8 @@ void DeleteFirstOrderFilter(FirstOrderFilter fof) {
 }
 
 #define  kFrameRateHz  100.0    /* in Hz */
+/* Avoid dividing by zero or attempting to travel back in time. */
+#define  kMinimumSpeed 0.01
 
 /* Make this buffer bigger than necessary to facilitate testing. */
 #define  kTemporalHysteresisBufferSize  2*(kTemporalHysteresisFuture+kTemporalHysteresisPast+1)
@@ -458,24 +460,14 @@ float* speedySpectrogram(speedyStream stream, float input[]) {
   int i;
   for (i=0; i < stream->window_size; i++) {
     stream->input_buffer[i] = CMPLX(input[i] * stream->window[i], 0);
-    // You might have to replace the statement above with the 2 below.
-    // stream->input_buffer[i][0] = input[i] * stream->window[i];
-    // stream->input_buffer[i][1] = 0;
   }
   for (i=stream->window_size; i < stream->fft_size; i++) {
     stream->input_buffer[i] = CMPLX(0, 0);
-    // You might have to replace the statement above with the 2 below.
-    // stream->input_buffer[i][0] = 0;
-    // stream->input_buffer[i][1] = 0;
   }
   fftw_execute(stream->spectrogram_plan); /* repeat as needed */
   for (i=0; i < stream->fft_size; i++) {
     complex double b = stream->fft_buffer[i];
     stream->spectrogram[i] = cabs(b);
-    // You might have to replace the 2 lines above with the 3 below.
-    // double re = stream->fft_buffer[i][0];
-    // double im = stream->fft_buffer[i][1];
-    // stream->spectrogram[i] = sqrt(re*re + im*im);
   }
   return stream->spectrogram;
 }
@@ -781,11 +773,12 @@ float speedyComputeSpeedFromTension(float tension, float R_g,
   if (R_g > 1.0) {
     requested_speed = fmax(1, R_g + (1-R_g)*tension);
   } else {
-    requested_speed = fmin(1, R_g - (1-R_g)*tension);
+    requested_speed = fmax(kMinimumSpeed, fmin(1, R_g - (1-R_g)*tension));
   }
   if (duration_feedback_strength > 0){
     float excess_duration = stream->current_duration - stream->desired_duration;
-    requested_speed += duration_feedback_strength * excess_duration;
+    requested_speed +=
+        fmax(kMinimumSpeed, duration_feedback_strength * excess_duration);
   }
   float frame_duration = 1.0/kFrameRateHz;
   stream->current_duration += frame_duration/requested_speed;
