@@ -28,7 +28,7 @@
  * To get the debugging files, must run the binary (outside of blaze)
  *   ../../blaze-bin/sonic2_test
  * Then copy to gcloud
- *   gsutil -m cp /tmp/sounds/[a-z]* gs://speedytestaudio.appspot.com/tmp/
+ *   gcloud storage cp /tmp/sounds/[a-z]* gs://speedytestaudio.appspot.com/tmp/
  * and view at
  *   https://pantheon.corp.google.com/storage/browser/speedytestaudio.appspot.com/tmp/?project=speedytestaudio
  */
